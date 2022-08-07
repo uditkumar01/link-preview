@@ -1,11 +1,9 @@
 import axios from "axios";
 import { load as loadDoc } from "cheerio";
 import { ILinkPreviewData } from "../pages/api/preview";
-import fs from "fs";
 
 const getDocument = async (url: string) => {
   const response = await axios.get(url);
-  fs.writeFileSync(`index.html`, response.data);
   return response.data;
 };
 
