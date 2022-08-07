@@ -2,11 +2,6 @@ import axios from "axios";
 import { load as loadDoc } from "cheerio";
 import { ILinkPreviewData } from "../pages/api/preview";
 
-const getDocument = async (url: string) => {
-  const response = await axios.get(url);
-  return response.data;
-};
-
 const removeEndingSlash = (url: string) => {
   if (url.endsWith("/")) {
     return url.slice(0, -1);
@@ -18,7 +13,7 @@ const checkIfImageIsNotBroken = async (url?: string) => {
   if (!url) return;
   try {
     const response = await axios.head(url);
-    return response.status in [200, 201];
+    return response.statusText === "OK";
   } catch (error: any) {
     return;
   }
@@ -143,8 +138,10 @@ const getFavicon = async (doc: any, baseURL: string) => {
   return faviconUrl || defaultURL;
 };
 
-const linkPreview = async (url: string): Promise<ILinkPreviewData> => {
-  const document = await getDocument(url);
+const linkPreview = async (
+  url: string,
+  document: any
+): Promise<ILinkPreviewData> => {
   const doc = loadDoc(document);
   const title = getTitle(doc);
   const description = getDescription(doc);

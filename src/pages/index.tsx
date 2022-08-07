@@ -49,7 +49,7 @@ const Home: NextPage = () => {
           "/api/preview",
           { url },
           {
-            timeout: 5000,
+            timeout: 10000,
           }
         );
         console.log(data);
