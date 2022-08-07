@@ -7,16 +7,9 @@ import { useState } from "react";
 import { ILinkPreviewData } from "./api/preview";
 import Link from "next/link";
 import addEllipses from "../utils/addEllipses";
+import { cachedSites } from "./constants";
 
-const defaultData = {
-  title: "Google: Don't be evil",
-  description:
-    "Google is a search engine that lets you search the web and find information and useful tools.",
-  image:
-    "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
-  favicon: "https://www.google.com/favicon.ico",
-  url: "https://google.com",
-};
+const defaultData = cachedSites["google.com"];
 
 const Home: NextPage = () => {
   const [urlData, setUrlData] = useState<ILinkPreviewData>(defaultData);
@@ -36,10 +29,12 @@ const Home: NextPage = () => {
     if (typeof url === "string" && url.length > 0) {
       url = url.trim();
       if (!url.startsWith("http")) {
-        url = `http://${url}`;
+        url = `https://${url}`;
       }
-      if (getDomainName(url) === "google.com") {
-        setUrlData(defaultData);
+      const domainName = getDomainName(url);
+      console.log(domainName, cachedSites?.[domainName]);
+      if (cachedSites?.[domainName] !== undefined) {
+        setUrlData(cachedSites?.[domainName]);
         return;
       }
       setIsLoading(true);
@@ -52,7 +47,6 @@ const Home: NextPage = () => {
             timeout: 10000,
           }
         );
-        console.log(data);
         setIsLoading(false);
         if (!data?.success) {
           setErrorMessage(data?.message);

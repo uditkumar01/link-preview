@@ -138,10 +138,18 @@ const getFavicon = async (doc: any, baseURL: string) => {
   return faviconUrl || defaultURL;
 };
 
-const linkPreview = async (
-  url: string,
-  document: any
-): Promise<ILinkPreviewData> => {
+const getDocument = async (url: string) => {
+  const response = await axios.get(url, {
+    headers: {
+      "user-agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.81 Safari/537.36",
+    },
+  });
+  return response.data;
+};
+
+const linkPreview = async (url: string): Promise<ILinkPreviewData> => {
+  const document = await getDocument(url);
   const doc = loadDoc(document);
   const title = getTitle(doc);
   const description = getDescription(doc);
