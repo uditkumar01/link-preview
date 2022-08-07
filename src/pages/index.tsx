@@ -77,8 +77,8 @@ const Home: NextPage = () => {
           rel="stylesheet"
         />
       </Head>
-
-      <main className="bg-[#cad7e9] flex flex-col justify-center items-center min-h-screen">
+      <div className="w-25pc h-1by1 pattern-cross-dots-md white bg-black-70"></div>
+      <main className="flex flex-col justify-center items-center min-h-screen">
         <div className="flex-1 flex justify-center items-center h-full">
           {!isLoading && !errorMessage ? (
             <div className="max-w-sm rounded overflow-hidden shadow-lg bg-white min-w-[340px]">
@@ -182,7 +182,7 @@ const Home: NextPage = () => {
             </button>
           </form>
         </div>
-        <p className="mb-2 text-md">
+        <p className="mb-2 text-md bg-white px-4 py-1 rounded-full shadow-sm">
           Made with ❣️ by{" "}
           <Link href="https://twitter.com/uditkumar_01" passHref>
             <a className="text-blue-500" target="_blank">

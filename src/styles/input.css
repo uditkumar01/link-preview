@@ -5,3 +5,12 @@
 * {
   font-family: "Quicksand", "Courier New", Courier, monospace;
 }
+
+body {
+  background-image: radial-gradient(
+    rgb(146, 146, 146) 1px,
+    rgb(240, 241, 241) 1px
+  );
+  background-size: calc(20 * 1px) calc(20 * 1px);
+  background-position: 0 0, calc(10 * 1px) calc(10 * 1px);
+}
