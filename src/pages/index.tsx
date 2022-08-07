@@ -13,10 +13,12 @@ const defaultData = {
   description:
     "Google is a search engine that lets you search the web and find information and useful tools.",
   image:
-    "https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png",
+    "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png",
   favicon: "https://www.google.com/favicon.ico",
   url: "https://google.com",
 };
+
+const reqProperties = Object.keys(defaultData);
 
 const Home: NextPage = () => {
   const [urlData, setUrlData] = useState<ILinkPreviewData>(defaultData);
@@ -29,6 +31,29 @@ const Home: NextPage = () => {
     return domain.split(/[/?#]/)[0]?.toLowerCase();
   };
 
+  const fetchURLDetails = async (url: string, type: "" | "adv-" = "") => {
+    setIsLoading(true);
+    setErrorMessage("");
+    try {
+      const { data } = await axios.post(
+        `/api/${type}preview`,
+        { url },
+        {
+          timeout: 10000,
+        }
+      );
+      setIsLoading(false);
+      if (!data?.success) throw new Error(data?.message);
+      const resData = data?.data || {};
+      setUrlData(resData);
+
+      return resData;
+    } catch (error: any) {
+      setIsLoading(false);
+      setErrorMessage(error.message);
+    }
+  };
+
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -36,32 +61,19 @@ const Home: NextPage = () => {
     if (typeof url === "string" && url.length > 0) {
       url = url.trim();
       if (!url.startsWith("http")) {
-        url = `http://${url}`;
+        url = `https://${url}`;
       }
-      if (getDomainName(url) === "google.com") {
-        setUrlData(defaultData);
-        return;
-      }
-      setIsLoading(true);
-      setErrorMessage("");
-      try {
-        const { data } = await axios.post(
-          "/api/preview",
-          { url },
-          {
-            timeout: 10000,
-          }
-        );
-        console.log(data);
-        setIsLoading(false);
-        if (!data?.success) {
-          setErrorMessage(data?.message);
-          return;
+      // if (getDomainName(url) === "google.com") {
+      //   setUrlData(defaultData);
+      //   return;
+      // }
+      const resData = await fetchURLDetails(url);
+      if (resData) {
+        // check if all required properties are present in the response
+        const isValid = reqProperties.every((prop) => resData?.[prop]);
+        if (!isValid) {
+          await fetchURLDetails(url, "adv-");
         }
-        setUrlData(data.data);
-      } catch (error: any) {
-        setIsLoading(false);
-        setErrorMessage(error.message);
       }
     }
   };
@@ -89,7 +101,7 @@ const Home: NextPage = () => {
           {!isLoading && !errorMessage ? (
             <div className="max-w-sm rounded overflow-hidden shadow-lg bg-white min-w-[340px]">
               <img
-                className="w-full max-h-60 object-contain p-4"
+                className="w-full max-h-60 bg-slate-100 object-contain p-4"
                 src={urlData.image || urlData.favicon || "/images/default.png"}
                 alt="Url preview image"
               />
@@ -142,9 +154,12 @@ const Home: NextPage = () => {
           ) : (
             <div className="max-w-sm rounded overflow-hidden p-2 px-3 shadow-lg bg-white min-w-[340px]">
               {isLoading ? (
-                <div className="flex gap-4 items-center">
-                  <ImSpinner8 size={18} className="animate-spin" />
-                  <span className="text-md">Loading...</span>
+                <div className="flex">
+                  <img
+                    className="w-full max-h-60 object-contain p-4"
+                    src="/images/fetch.gif"
+                    alt="Loading"
+                  />
                 </div>
               ) : errorMessage ? (
                 "🚨 Failed to fetch preview"

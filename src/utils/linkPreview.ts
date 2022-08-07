@@ -2,15 +2,46 @@ import axios from "axios";
 import { load as loadDoc } from "cheerio";
 import { ILinkPreviewData } from "../pages/api/preview";
 
+const invalidImageTexts = ["captcha"];
+
 const removeEndingSlash = (url: string) => {
-  if (url.endsWith("/")) {
-    return url.slice(0, -1);
-  }
-  return url;
+  return url.replace(/\/+$/, "");
 };
 
-const checkIfImageIsNotBroken = async (url?: string) => {
-  if (!url) return;
+const removeInitalSlash = (url: string) => {
+  return url.replace(/^\/+/, "");
+};
+
+const resolveUrl = (url: string, baseURL: string) => {
+  if (typeof url !== "string") return;
+
+  // remove initial slash if present
+  url = removeInitalSlash(url);
+  // remove ending slash if present
+  url = removeEndingSlash(url);
+  // check if url is a valid url using regex
+  if (
+    url.match(
+      /^(https?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/
+    ) !== null
+  ) {
+    if (url.startsWith("http")) {
+      return url;
+    }
+    return `https://${url}`;
+  }
+
+  // check if its a data url
+  if (url.startsWith("data:")) return url;
+
+  if (url.startsWith("http")) {
+    return url;
+  }
+
+  return `${removeEndingSlash(baseURL)}/${url}`;
+};
+
+const checkIfImageIsNotBroken = async (url: string) => {
   try {
     const response = await axios.head(url);
     return response.statusText === "OK";
@@ -19,20 +50,38 @@ const checkIfImageIsNotBroken = async (url?: string) => {
   }
 };
 
-const resolveUrl = (url: string, rootUrl: string) => {
-  if (typeof url !== "string") return;
-
-  // check if its a data url
-  if (url.startsWith("data:")) return url;
-
-  if (url.startsWith("http")) {
-    return url;
+const getIfValidImageExists = async (url?: string) => {
+  if (!url) return;
+  if (invalidImageTexts.some((txt) => url.includes(txt))) return;
+  // check how both url with or without www
+  let urls = [url];
+  if (url.includes("www.")) {
+    urls.push(url.replace("www.", ""));
+  } else {
+    // add www to the url after https:// or http:// or at start
+    urls.push(url.replace(/^(https?:\/\/)/, "https://www."));
+    urls.push(url.replace(/^(https?:\/\/)/, "http://www."));
   }
-  if (url.startsWith("/")) {
-    return `${removeEndingSlash(rootUrl)}${url}`;
+  for (const url of urls) {
+    const isImageisValid = await checkIfImageIsNotBroken(url);
+    if (isImageisValid) return url;
   }
-  return `${removeEndingSlash(rootUrl)}/${url}`;
 };
+
+// const resolveUrl = (url: string, rootUrl: string) => {
+//   if (typeof url !== "string") return;
+
+//   // check if its a data url
+//   if (url.startsWith("data:")) return url;
+
+//   if (url.startsWith("http")) {
+//     return url;
+//   }
+//   if (url.startsWith("/")) {
+//     return `${removeEndingSlash(rootUrl)}${url}`;
+//   }
+//   return `${removeEndingSlash(rootUrl)}/${url}`;
+// };
 
 const getMetaTags = (doc: any, type: string, attr: string) => {
   let nodes: any[] = [];
@@ -76,19 +125,26 @@ const getDescription = (doc: any) => {
 };
 
 const getImage = async (doc: any, baseURL: string) => {
-  let image =
-    getMetaTagContent(doc, "og:image", "property") ||
-    getMetaTagContent(doc, "og:image", "name");
+  let image;
+  let imageStrs = [
+    getMetaTagContent(doc, "og:image", "property"),
+    getMetaTagContent(doc, "og:image", "name"),
+  ];
 
-  if (image) {
-    return resolveUrl(image, baseURL);
+  for (const imageStr of imageStrs) {
+    if (imageStr) {
+      image = resolveUrl(imageStr, baseURL);
+      image = getIfValidImageExists(image);
+      if (image) return image;
+    }
   }
 
   const imageNodeHref = doc(`link[rel=image_src]`).attr(`href`);
 
   if (imageNodeHref) {
     image = resolveUrl(imageNodeHref, baseURL);
-    if (await checkIfImageIsNotBroken(image)) {
+    image = await getIfValidImageExists(image);
+    if (image) {
       return image;
     }
   }
@@ -100,7 +156,8 @@ const getImage = async (doc: any, baseURL: string) => {
         image = node?.attribs?.src || node?.attr?.("src");
         if (image) {
           image = resolveUrl(image, baseURL);
-          if (await checkIfImageIsNotBroken(image)) {
+          image = await getIfValidImageExists(image);
+          if (image) {
             return image;
           }
         }
@@ -130,10 +187,7 @@ const getFavicon = async (doc: any, baseURL: string) => {
   }
 
   let defaultURL = resolveUrl("/favicon.ico", baseURL);
-  const isValid = await checkIfImageIsNotBroken(defaultURL);
-  if (!isValid) {
-    defaultURL = undefined;
-  }
+  defaultURL = await getIfValidImageExists(defaultURL);
 
   return faviconUrl || defaultURL;
 };

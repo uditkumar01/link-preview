@@ -33,6 +33,7 @@ export default async function handler(
 ) {
   try {
     const { url } = req.body;
+    console.log("Normal preview:", url);
     const document = await getDocument(url);
     const data = await linkPreview(url, document);
     res.status(200).json({ success: true, data: data });

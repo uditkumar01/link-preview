@@ -29,7 +29,7 @@ export default async function handler(
 ) {
   try {
     const { url } = req.body;
-    // const document = await getDocument(url);
+    console.log("Advanced preview:", url);
     const browser = await puppeteer.launch(
       process.env.NODE_ENV === "production"
         ? {
@@ -47,7 +47,6 @@ export default async function handler(
     const page = await browser.newPage();
     await page.goto(url);
     const document = await page.content();
-    console.log(document);
     const data = await linkPreview(url, document);
     await browser.close();
     res.status(200).json({ success: true, data: data });
