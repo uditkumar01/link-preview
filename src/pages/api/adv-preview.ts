@@ -36,6 +36,7 @@ export default async function handler(
             args: chrome.args,
             executablePath: await chrome.executablePath,
             headless: chrome.headless,
+            ignoreDefaultArgs: ["--disable-extensions"],
           }
         : {
             args: chrome.args,
