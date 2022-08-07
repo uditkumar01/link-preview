@@ -7,7 +7,7 @@ import { useState } from "react";
 import { ILinkPreviewData } from "./api/preview";
 import Link from "next/link";
 import addEllipses from "../utils/addEllipses";
-import { cachedSites } from "./constants";
+import { cachedSites } from "../constants";
 
 const defaultData = cachedSites["google.com"];
 
