@@ -9,18 +9,20 @@ import Link from "next/link";
 import addEllipses from "../utils/addEllipses";
 import { cachedSites } from "../constants";
 
-const defaultData = cachedSites["google.com"];
+const getDomainName = (url?: string) => {
+  if (!url) return "";
+  const domain = url.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "");
+  return domain.split(/[/?#]/)[0]?.toLowerCase();
+};
+
+const defaultSite = "https://www.google.com";
+
+const defaultData = cachedSites[getDomainName(defaultSite)];
 
 const Home: NextPage = () => {
   const [urlData, setUrlData] = useState<ILinkPreviewData>(defaultData);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const getDomainName = (url?: string) => {
-    if (!url) return "";
-    const domain = url.replace(/^(?:https?:\/\/)?(?:www\.)?/i, "");
-    return domain.split(/[/?#]/)[0]?.toLowerCase();
-  };
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -171,7 +173,7 @@ const Home: NextPage = () => {
                 focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none
               "
               id="url-to-preview"
-              placeholder="https://github.com"
+              placeholder={defaultSite}
               aria-label="Url input field"
             />
             <button
